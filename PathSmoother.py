@@ -22,10 +22,7 @@ def random_pt_on_edge(start_knot_pt, end_knot_pt):
         return (x, y)
 
 def findRandomShortcut(planner, points):
-    """
-    Interpoliert eine Polyline (Liste von Punkten) segmentweise.
-    Duplikate an Segmentübergängen werden vermieden.
-    """
+    
     if len(points) < 2:
         return None
     
@@ -44,14 +41,7 @@ def findRandomShortcut(planner, points):
             return u, v
 
 def insertAndConnectPointsOnEdges(G, solution, random_edge_pts, u, v, id_counter, color):
-    """
-    Fügt einen neuen Knoten n auf die Kante (u,v) ein:
-    - entfernt (u,v)
-    - add_edge(u,n), add_edge(n,v)
-    - setzt pos
-    Rückgabe: n
-    """
-
+    
     id_u = f"S{id_counter + 1}"
     id_v = f"S{id_counter + 2}"
 

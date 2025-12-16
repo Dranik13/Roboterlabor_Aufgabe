@@ -70,16 +70,12 @@ class SmoothBG():
                         
                         self.added_nodes += 1  
                         new_nodes_generated = True
-                        #id += 1 # always to find even smoother edge
                     else:
                         id += 1 # no skip possible
             else: 
                 id += 1 # no relevant edge to skip
                 
-            node_name_cache:str = collision_free_path[id]
             
-            #if type(node_name_cache) == type("") and type(start_node_name) == type(""):
-                # Check deltree added nodes. Limitting amount of new nodes per deltree cascade for reducing hypertuning of path and time consumption
             if new_nodes_generated:
                 new_added_nodes_in_a_cascade += 1
                 # skip next node in path (what is in that case a "new_start_node") and jump directly to the "new_goal_node"
@@ -87,7 +83,6 @@ class SmoothBG():
                     new_added_nodes_in_a_cascade = 0
                     id += 1
                     
-                #start_node_name = node_name_cache
             else:
                 new_added_nodes_in_a_cascade = 0
             

@@ -27,7 +27,7 @@ class SmoothBG():
         '''
         id = 0
         self.added_nodes = 0
-        new_added_nodes = 0
+        new_added_nodes_in_a_cascade = 0
       
         start_node_name = collision_free_path[id]
         while start_node_name != collision_free_path[-1] and not id + 2 >= len(collision_free_path):
@@ -43,6 +43,8 @@ class SmoothBG():
             unshorted_length = np.linalg.norm(skip_node-start_node) + np.linalg.norm(goal_node - skip_node)
             shorted_length = np.linalg.norm(goal_node - start_node)
             
+            new_nodes_generated = False
+            
             if unshorted_length / shorted_length >= corner_threshold:
 
                 if self.try_direct_skip(start_node, goal_node):
@@ -57,7 +59,9 @@ class SmoothBG():
                         self.path_planer.graph.add_node("new_goal_node_" + str(self.added_nodes), pos = list(new_goal))
                         
                         self.path_planer.graph.add_edge(start_node_name, "new_start_node_" + str(self.added_nodes))
-                        self.path_planer.graph.add_edge(goal_node_name, "new_goal_node_" + str(self.added_nodes))
+                        self.path_planer.graph.add_edge("new_goal_node_" + str(self.added_nodes), goal_node_name)
+                        self.path_planer.graph.add_edge("new_start_node_" + str(self.added_nodes), "new_goal_node_" + str(self.added_nodes))
+                        
                         
                         # remove skipped node
                         collision_free_path.remove(skip_node_name)
@@ -65,23 +69,29 @@ class SmoothBG():
                         
                         
                         self.added_nodes += 1  
-            
-            id += 1
+                        new_nodes_generated = True
+                        #id += 1 # always to find even smoother edge
+                    else:
+                        id += 1 # no skip possible
+            else: 
+                id += 1 # no relevant edge to skip
+                
             node_name_cache:str = collision_free_path[id]
             
-            if type(node_name_cache) == type(""):
+            #if type(node_name_cache) == type("") and type(start_node_name) == type(""):
                 # Check deltree added nodes. Limitting amount of new nodes per deltree cascade for reducing hypertuning of path and time consumption
-                if node_name_cache.find("new_start_node_") != -1 and start_node_name.find("new_start_node_") != -1:
-                    new_added_nodes += 1
-                    # skip next node in path (what is in that case a "new_start_node") and jump directly to the "new_goal_node"
-                    if new_added_nodes == max_new_node_in_cascade:
-                        id += 1
-                        
-                    start_node_name = node_name_cache
+            if new_nodes_generated:
+                new_added_nodes_in_a_cascade += 1
+                # skip next node in path (what is in that case a "new_start_node") and jump directly to the "new_goal_node"
+                if new_added_nodes_in_a_cascade == max_new_node_in_cascade:
+                    new_added_nodes_in_a_cascade = 0
+                    id += 1
                     
-                else:
-                    new_added_nodes = 0
-                    start_node_name = collision_free_path[id]
+                #start_node_name = node_name_cache
+            else:
+                new_added_nodes_in_a_cascade = 0
+            
+            start_node_name = collision_free_path[id]
             
             
         

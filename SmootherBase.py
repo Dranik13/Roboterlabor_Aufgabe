@@ -76,6 +76,9 @@ class SmootherBase():
             
             
     def animate_path(self, environment, origin_path, title = "Smoothed animation"):
+        if origin_path == []:
+            return
+        
         fig_local = plt.figure(figsize=(7, 7))
         ax_origin = fig_local.add_subplot(1, 1, 1)
         

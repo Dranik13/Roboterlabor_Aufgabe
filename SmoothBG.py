@@ -7,7 +7,14 @@ from IPython.display import HTML, display
 
 from IPVISLazyPRM import visibilityPRMVisualizeWspace
 
-from SmootherBase import SmootherBase
+from SmootherBase import SmootherBase,Angle
+
+
+import IPEnvironment 
+import IPEnvironmentKin
+import IPEnvironmentShapeRobot
+
+from math import *
 
 class SmoothBG(SmootherBase):
     def __init__(self):
@@ -20,6 +27,7 @@ class SmoothBG(SmootherBase):
         :param config: Configuration of smoother
         :return: smoothed path 
         '''
+        self.smoothed_path.clear()
         
         if path == []:
             return []
@@ -35,72 +43,106 @@ class SmoothBG(SmootherBase):
         '''
         Run the skip process. Starting with first node till the last one
         '''
-        id = 0
         self.added_nodes = 0
-        new_added_nodes_in_a_cascade = 0
       
-        start_node_name = collision_free_path[id]
-        while start_node_name != collision_free_path[-1] and not id + 2 >= len(collision_free_path) and epoche_counter != epoches:
+        max_corner = inf
+        skip_possible = True
+        
+        not_smooth_able_pairs = []
+        
+        while max_corner >= corner_threshold and epoche_counter != epoches and skip_possible == True:
             
             self.path_per_epoche.append(list(collision_free_path))
             epoche_counter += 1
             
-            goal_node_name = collision_free_path[id + 2]
-            skip_node_name = collision_free_path[id + 1]
+            max_start_node_name = None
+            max_goal_node_name = None
+            max_skip_node_name = None
             
-            start_node = np.array(self.path_planer.graph.nodes[start_node_name]["pos"])
-            skip_node = np.array(self.path_planer.graph.nodes[skip_node_name]["pos"])
-            goal_node = np.array(self.path_planer.graph.nodes[goal_node_name]["pos"])
+            max_start_node = None
+            max_skip_node = None
+            max_goal_node = None
+            
+            max_corner = 0.0
+            max_id = 0.0
+                        
+            for i in range(0, len(collision_free_path) - 2):
+                start_node_name = collision_free_path[i]
+                skip_node_name = collision_free_path[i + 1]
+                goal_node_name = collision_free_path[i + 2]
+                                
+                start_node = np.array(self.path_planer.graph.nodes[start_node_name]["pos"])
+                skip_node = np.array(self.path_planer.graph.nodes[skip_node_name]["pos"])
+                goal_node = np.array(self.path_planer.graph.nodes[goal_node_name]["pos"])
+                
+                
+                collission_checker_type = type(self.path_planer._collisionChecker)
+                limits = self.path_planer._collisionChecker.getEnvironmentLimits()
+            
+                if collission_checker_type == type(IPEnvironmentShapeRobot.ShapeRobotWithOrientation):
+                    start_node[2] = Angle(float(start_node[2]), limits[2][0], limits[2][1])
+                    skip_node[2] = Angle(float(skip_node[2]), limits[2][0], limits[2][1])
+                    goal_node[2] = Angle(float(goal_node[2]), limits[2][0], limits[2][1])
+                    
+                    
+                if collission_checker_type == type(IPEnvironmentKin.KinChainCollisionChecker):
+                    for i in range(len(limits)):
+                        start_node[i] = Angle(float(start_node[i]), limits[i][0], limits[i][1])
+                        skip_node[i] = Angle(float(skip_node[i]), limits[i][0], limits[i][1])
+                        goal_node[i] = Angle(float(goal_node[i]), limits[i][0], limits[i][1])
             
             
-            # check id it's a edge which is worth to get skipped
-            unshorted_length = np.linalg.norm(skip_node-start_node) + np.linalg.norm(goal_node - skip_node)
-            shorted_length = np.linalg.norm(goal_node - start_node)
-            
-            new_nodes_generated = False
-            
-            if unshorted_length / shorted_length >= corner_threshold:
+                # check id it's a edge which is worth to get skipped
+                indirect_connection = np.linalg.norm(skip_node-start_node) + np.linalg.norm(goal_node - skip_node)
+                direct_connection = np.linalg.norm(goal_node - start_node)
+                
+                edge = abs(1.0 - indirect_connection / direct_connection)
+                
+                if edge > max_corner and edge > corner_threshold and not i in not_smooth_able_pairs:
+                    max_corner = edge
+                    
+                    max_start_node_name = start_node_name
+                    max_skip_node_name = skip_node_name
+                    max_goal_node_name = goal_node_name
+                    
+                    max_start_node = np.copy(start_node)
+                    max_skip_node = np.copy(skip_node)
+                    max_goal_node = np.copy(goal_node)
+                    
+                    max_id = i
+                    
+                        
+            if max_skip_node_name != None:
 
-                if self.try_direct_skip(start_node, goal_node):
-                    collision_free_path.remove(skip_node_name)
+                if self.try_direct_skip(max_start_node, max_goal_node):
+                    collision_free_path.remove(max_skip_node_name)
+                    not_smooth_able_pairs.clear()
                 else:                    
-                    success, new_start, new_goal = self.try_deltree_skip(start_node, goal_node, skip_node)
+                    success, new_start, new_goal = self.try_deltree_skip(max_start_node, max_goal_node, max_skip_node)
                     if success:
-                        collision_free_path.insert(id + 1, "new_start_node_" + str(self.added_nodes))
-                        collision_free_path.insert(id + 2, "new_goal_node_" + str(self.added_nodes))
+                        collision_free_path.insert(max_id + 1, "new_start_node_" + str(self.added_nodes))
+                        collision_free_path.insert(max_id + 2, "new_goal_node_" + str(self.added_nodes))
                         # add to graph
                         self.path_planer.graph.add_node("new_start_node_" + str(self.added_nodes), pos = list(new_start))
                         self.path_planer.graph.add_node("new_goal_node_" + str(self.added_nodes), pos = list(new_goal))
                         
-                        self.path_planer.graph.add_edge(start_node_name, "new_start_node_" + str(self.added_nodes))
+                        self.path_planer.graph.add_edge(max_start_node_name, "new_start_node_" + str(self.added_nodes))
                         self.path_planer.graph.add_edge("new_start_node_" + str(self.added_nodes), "new_goal_node_" + str(self.added_nodes))
-                        self.path_planer.graph.add_edge("new_goal_node_" + str(self.added_nodes), goal_node_name)
+                        self.path_planer.graph.add_edge("new_goal_node_" + str(self.added_nodes), max_goal_node_name)
                         
                         
                         # remove skipped node
-                        collision_free_path.remove(skip_node_name)
+                        collision_free_path.remove(max_skip_node_name)
 
                         
                         
-                        self.added_nodes += 1  
-                        id += 1
+                        self.added_nodes += 2
+                        not_smooth_able_pairs.clear()
                     else:
-                        id += 1 # no skip possible
-            else: 
-                id += 1 # no relevant edge to skip
-                
+                        not_smooth_able_pairs.append(max_id)
+            else:
+                skip_possible = False
             
-            # if new_nodes_generated:
-            #     new_added_nodes_in_a_cascade += 1
-            #     # skip next node in path (what is in that case a "new_start_node") and jump directly to the "new_goal_node"
-            #     if new_added_nodes_in_a_cascade == max_new_node_in_cascade:
-            #         new_added_nodes_in_a_cascade = 0
-            #         id += 1
-                    
-            # else:
-            #     new_added_nodes_in_a_cascade = 0
-            
-            start_node_name = collision_free_path[id]
             
             
             
@@ -115,10 +157,6 @@ class SmoothBG(SmootherBase):
             for node in to_remove:
                 self.path_planer.graph.remove_node(node)
 
-        # # create edges
-        # for i in range(1, len(collision_free_path)):
-        #     self.path_planer.graph.add_edge(collision_free_path[i-1], collision_free_path[i])
-
 
         self.smoothed_path = collision_free_path
         return collision_free_path
@@ -131,9 +169,9 @@ class SmoothBG(SmootherBase):
     def try_direct_skip(self, start, goal) -> bool:
         collision_intervals = self.config["collision_intervals"]
         
-        unit_vector = (goal - start) / np.linalg.norm((goal - start))
+        unit_vector = (goal - start) / collision_intervals
         
-        for i in range(1, collision_intervals + 1):
+        for i in range(0, collision_intervals + 1):
             if self.path_planer._collisionChecker.pointInCollision(start + unit_vector * i):
                 return False
         
@@ -141,7 +179,7 @@ class SmoothBG(SmootherBase):
     
     def try_deltree_skip(self, start, goal, skip_node):
         max_deltree_depth:int = self.config["max_deltree_depth"]
-        min_deltree_delta:float = self.config["min_deltree_delta"]
+        # min_deltree_delta:float = self.config["min_deltree_delta"]
         
         '''
         From step to step the new_start and new_goal node are getting closer to the skipping node
@@ -150,17 +188,19 @@ class SmoothBG(SmootherBase):
             new_start_node = start + (skip_node - start) / 2**k
             new_goal_node = skip_node + (goal - skip_node) / 2**k
             
-            delta_1 = np.linalg.norm(skip_node - new_start_node)
-            delta_2 = np.linalg.norm(new_goal_node - skip_node)
+            # delta_1 = np.linalg.norm(skip_node - new_start_node)
+            # delta_2 = np.linalg.norm(new_goal_node - skip_node)
             
-            if delta_1 <= min_deltree_delta or delta_2 <= min_deltree_delta:
-                return False, None, None
+            # if delta_1 <= min_deltree_delta and delta_2 <= min_deltree_delta:
+            #     break
             
             if self.try_direct_skip(new_start_node, new_goal_node):
                 return True, new_start_node, new_goal_node
             
             start = new_start_node
             goal = new_goal_node
+            
+        return False, None, None
 
     # def visualize_smoothing(self, environment):
     #     figure = plt.figure(figsize=(7, 7))

@@ -20,10 +20,10 @@ class SmoothBG(SmootherBase):
     def __init__(self):
         super().__init__()
     
-    def smooth_path(self, path, planer, config, clean_up = False):
+    def smooth_path(self, path, planner, config, clean_up = False):
         '''        
-        :param path: Collison free path of path planer
-        :param planer: Used path planer algorithem for access to the graph and collisionchecker
+        :param path: Collison free path of path planner
+        :param planner: Used path planner algorithem for access to the graph and collisionchecker
         :param config: Configuration of smoother
         :return: smoothed path 
         '''
@@ -33,7 +33,7 @@ class SmoothBG(SmootherBase):
             return []
         
         collision_free_path:list = list(path)
-        self.path_planer = planer
+        self.path_planner = planner
         self.config:dict = config
         
         corner_threshold:float = self.config["corner_threshold"]
@@ -71,13 +71,13 @@ class SmoothBG(SmootherBase):
                 skip_node_name = collision_free_path[i + 1]
                 goal_node_name = collision_free_path[i + 2]
                                 
-                start_node = np.array(self.path_planer.graph.nodes[start_node_name]["pos"])
-                skip_node = np.array(self.path_planer.graph.nodes[skip_node_name]["pos"])
-                goal_node = np.array(self.path_planer.graph.nodes[goal_node_name]["pos"])
+                start_node = np.array(self.path_planner.graph.nodes[start_node_name]["pos"])
+                skip_node = np.array(self.path_planner.graph.nodes[skip_node_name]["pos"])
+                goal_node = np.array(self.path_planner.graph.nodes[goal_node_name]["pos"])
                 
                 
-                collission_checker_type = type(self.path_planer._collisionChecker)
-                limits = self.path_planer._collisionChecker.getEnvironmentLimits()
+                collission_checker_type = type(self.path_planner._collisionChecker)
+                limits = self.path_planner._collisionChecker.getEnvironmentLimits()
             
                 if collission_checker_type == type(IPEnvironmentShapeRobot.ShapeRobotWithOrientation):
                     start_node[2] = Angle(float(start_node[2]), limits[2][0], limits[2][1])
@@ -123,12 +123,12 @@ class SmoothBG(SmootherBase):
                         collision_free_path.insert(max_id + 1, "new_start_node_" + str(self.added_nodes))
                         collision_free_path.insert(max_id + 2, "new_goal_node_" + str(self.added_nodes))
                         # add to graph
-                        self.path_planer.graph.add_node("new_start_node_" + str(self.added_nodes), pos = list(new_start))
-                        self.path_planer.graph.add_node("new_goal_node_" + str(self.added_nodes), pos = list(new_goal))
+                        self.path_planner.graph.add_node("new_start_node_" + str(self.added_nodes), pos = list(new_start))
+                        self.path_planner.graph.add_node("new_goal_node_" + str(self.added_nodes), pos = list(new_goal))
                         
-                        self.path_planer.graph.add_edge(max_start_node_name, "new_start_node_" + str(self.added_nodes))
-                        self.path_planer.graph.add_edge("new_start_node_" + str(self.added_nodes), "new_goal_node_" + str(self.added_nodes))
-                        self.path_planer.graph.add_edge("new_goal_node_" + str(self.added_nodes), max_goal_node_name)
+                        self.path_planner.graph.add_edge(max_start_node_name, "new_start_node_" + str(self.added_nodes))
+                        self.path_planner.graph.add_edge("new_start_node_" + str(self.added_nodes), "new_goal_node_" + str(self.added_nodes))
+                        self.path_planner.graph.add_edge("new_goal_node_" + str(self.added_nodes), max_goal_node_name)
                         
                         
                         # remove skipped node
@@ -148,14 +148,14 @@ class SmoothBG(SmootherBase):
             
         
         if clean_up:
-            nodes = self.path_planer.graph.nodes()
+            nodes = self.path_planner.graph.nodes()
             to_remove = []
             for node in nodes:
                 if not node in collision_free_path and type(node) == type(""):
                     to_remove.append(node)
         
             for node in to_remove:
-                self.path_planer.graph.remove_node(node)
+                self.path_planner.graph.remove_node(node)
 
 
         self.smoothed_path = collision_free_path
@@ -172,7 +172,7 @@ class SmoothBG(SmootherBase):
         unit_vector = (goal - start) / collision_intervals
         
         for i in range(0, collision_intervals + 1):
-            if self.path_planer._collisionChecker.pointInCollision(start + unit_vector * i):
+            if self.path_planner._collisionChecker.pointInCollision(start + unit_vector * i):
                 return False
         
         return True
@@ -223,7 +223,7 @@ class SmoothBG(SmootherBase):
 
     #         graph = nx.Graph()
     #         for node in self.path_per_epoche[frame]:
-    #             graph.add_node(node, pos = self.path_planer.graph.nodes[node]["pos"])
+    #             graph.add_node(node, pos = self.path_planner.graph.nodes[node]["pos"])
             
             
     #         for i in range(len(self.path_per_epoche[frame]) - 1):

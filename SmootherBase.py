@@ -93,28 +93,29 @@ class Angle:
 class SmootherBase():
     def __init__(self):
         self.smoothed_path = []
-        self.path_planer = None
+        self.path_planner = None
         
         self.config = {}
         self.path_per_epoche = []
     
-    def visualize_smoothing(self, seconds_per_frame=0.1):
+    def visualize_smoothing(self, seconds_per_frame=0.1, title="Path smoothing BG"):
         if self.smoothed_path == []:
+            print("no Smoothed Path",flush=True)
             return 
         figure = plt.figure(figsize=(7, 7))
 
         ax = figure.add_subplot(1, 1, 1)
 
-        environment = self.path_planer._collisionChecker
+        environment = self.path_planner._collisionChecker
         workSpaceLimits = environment.robot.getLimits()
                    
-        environment.robot.setTo(self.path_planer.graph.nodes[self.smoothed_path[0]]["pos"])
+        environment.robot.setTo(self.path_planner.graph.nodes[self.smoothed_path[0]]["pos"])
                     
         def animation(frame):
             ## clear taks space figure
             ax.cla()
             ## fix figure size
-            ax.set_title("Path smoothing BG", fontsize=14)
+            ax.set_title(title, fontsize=14)
             ax.set_xlim(workSpaceLimits[0])
             ax.set_ylim(workSpaceLimits[1])
             ## draw obstacles
@@ -123,7 +124,7 @@ class SmootherBase():
 
             graph = nx.Graph()
             for node in self.path_per_epoche[frame]:
-                graph.add_node(node, pos = self.path_planer.graph.nodes[node]["pos"])
+                graph.add_node(node, pos = self.path_planner.graph.nodes[node]["pos"])
             
             
             for i in range(len(self.path_per_epoche[frame]) - 1):
@@ -152,8 +153,8 @@ class SmootherBase():
         if not origin_path:
             return
         
-        origin_planer = copy.deepcopy(self.path_planer)
-        smoothed_planer = copy.deepcopy(self.path_planer)
+        origin_planer = copy.deepcopy(self.path_planner)
+        smoothed_planer = copy.deepcopy(self.path_planner)
         
         to_remove = []
         for node in origin_planer.graph.nodes():

@@ -83,8 +83,9 @@ import matplotlib.animation
 from IPython.display import HTML
 
 matplotlib.rcParams['animation.embed_limit'] = 64
-def animateSolution(planner, environment, solution, visualizer, workSpaceLimits=[[-3,3],[-3,3]]):
+def animateSolution(planner, graph, environment, solution, visualizer, workSpaceLimits=[[-3,3],[-3,3]], title="Planned Path"):
     _planner = planner
+    _graph = graph
     _environment = environment
     _solution = solution
     _prmVisualizer = visualizer
@@ -92,10 +93,13 @@ def animateSolution(planner, environment, solution, visualizer, workSpaceLimits=
     if _environment.getDim() == 2:
     
         fig_local = plt.figure(figsize=(14, 7))
+        fig_local.suptitle(title, fontsize=16)
         ax1 = fig_local.add_subplot(1, 2, 1)
+        ax1.set_title("Workspace", fontsize=14)
         ax2 = fig_local.add_subplot(1, 2, 2)
+        ax2.set_title("C-Space", fontsize=14)
         ## get positions for solution
-        solution_pos = [_planner.graph.nodes[node]['pos'] for node in _solution]
+        solution_pos = [_graph.nodes[node]['pos'] for node in _solution]
         ## interpolate to obtain a smoother movement
         i_solution_pos = [solution_pos[0]]
         for i in range(1, len(solution_pos)):
@@ -110,6 +114,7 @@ def animateSolution(planner, environment, solution, visualizer, workSpaceLimits=
         def animate(t):
             ## clear taks space figure
             ax1.cla()
+            ax1.set_title("Workspace", fontsize=14)
             ## fix figure size
             ax1.set_xlim(workSpaceLimits[0])
             ax1.set_ylim(workSpaceLimits[1])
@@ -122,6 +127,7 @@ def animateSolution(planner, environment, solution, visualizer, workSpaceLimits=
         
             ## clear joint space figure
             ax2.cla()
+            ax2.set_title("C-Space", fontsize=14)
             ## draw graph and path
             _prmVisualizer(_planner, solution, ax2)
             ## draw current position in joint space
@@ -135,7 +141,7 @@ def animateSolution(planner, environment, solution, visualizer, workSpaceLimits=
         fig_local = plt.figure(figsize=(7, 7))
         ax1 = fig_local.add_subplot(1, 1, 1)
         ## get positions for solution
-        solution_pos = [_planner.graph.nodes[node]['pos'] for node in _solution]
+        solution_pos = [_graph.nodes[node]['pos'] for node in _solution]
         ## interpolate to obtain a smoother movement
         i_solution_pos = [solution_pos[0]]
         for i in range(1, len(solution_pos)):
@@ -150,6 +156,7 @@ def animateSolution(planner, environment, solution, visualizer, workSpaceLimits=
         def animate(t):
             ## clear taks space figure
             ax1.cla()
+            ax1.set_title("Workspace", fontsize=14)
             ## fix figure size
             ax1.set_xlim(workSpaceLimits[0])
             ax1.set_ylim(workSpaceLimits[1])

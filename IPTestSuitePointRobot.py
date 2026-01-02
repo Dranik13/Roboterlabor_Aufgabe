@@ -15,30 +15,32 @@ import shapely.affinity
 import math
 import numpy as np
 
+import labyrinth
+
 # define robot geometry
 robot_shape = Point([(0,0)]).buffer(0.1)
 shape_robot = ShapeRobotWithOrientation(robot_shape, limits=[[0.0, 22.0], [0.0, 22.0], [0,0]])
 benchList = list()
 
-# -----------------------------------------
-trapField = dict()
-trapField["obs1"] =   LineString([(6, 18), (6, 8), (16, 8), (16,18)]).buffer(1.0)
-description = "Following the direct connection from goal to start would lead the algorithm into a trap."
-benchList.append(Benchmark("Trap", CollisionCheckerShapeRobot(trapField, shape_robot), [[10,15,0]], [[10,1,0]], description, 2))
+# # -----------------------------------------
+# trapField = dict()
+# trapField["obs1"] =   LineString([(6, 18), (6, 8), (16, 8), (16,18)]).buffer(1.0)
+# description = "Following the direct connection from goal to start would lead the algorithm into a trap."
+# benchList.append(Benchmark("Trap", CollisionCheckerShapeRobot(trapField, shape_robot), [[10,15,0]], [[10,1,0]], description, 2))
 
-# -----------------------------------------
-bottleNeckField = dict()
-bottleNeckField["obs1"] = LineString([(0, 13), (11, 13)]).buffer(.5)
-bottleNeckField["obs2"] = LineString([(13, 13), (23,13)]).buffer(.5)
-description = "Planer has to find a narrow passage."
-benchList.append(Benchmark("Bottleneck", CollisionCheckerShapeRobot(bottleNeckField, shape_robot), [[4,15,0]], [[18,1,0]], description, 2))
+# # -----------------------------------------
+# bottleNeckField = dict()
+# bottleNeckField["obs1"] = LineString([(0, 13), (11, 13)]).buffer(.5)
+# bottleNeckField["obs2"] = LineString([(13, 13), (23,13)]).buffer(.5)
+# description = "Planer has to find a narrow passage."
+# benchList.append(Benchmark("Bottleneck", CollisionCheckerShapeRobot(bottleNeckField, shape_robot), [[4,15,0]], [[18,1,0]], description, 2))
 
-# -----------------------------------------
-fatBottleNeckField = dict()
-fatBottleNeckField["obs1"] = Polygon([(0, 8), (11, 8),(11, 15), (0, 15)]).buffer(.5)
-fatBottleNeckField["obs2"] = Polygon([(13, 8), (24, 8),(24, 15), (13, 15)]).buffer(.5)
-description = "Planer has to find a narrow passage with a significant extend."
-benchList.append(Benchmark("Fat bottleneck", CollisionCheckerShapeRobot(fatBottleNeckField, shape_robot), [[4,21,0]], [[18,1,0]], description, 2))
+# # -----------------------------------------
+# fatBottleNeckField = dict()
+# fatBottleNeckField["obs1"] = Polygon([(0, 8), (11, 8),(11, 15), (0, 15)]).buffer(.5)
+# fatBottleNeckField["obs2"] = Polygon([(13, 8), (24, 8),(24, 15), (13, 15)]).buffer(.5)
+# description = "Planer has to find a narrow passage with a significant extend."
+# benchList.append(Benchmark("Fat bottleneck", CollisionCheckerShapeRobot(fatBottleNeckField, shape_robot), [[4,21,0]], [[18,1,0]], description, 2))
 
 # -----------------------------------------
 
@@ -56,3 +58,9 @@ myField["Antenna_Head_R"] = Point(8.5, 16).buffer(1)
 myField["Rob_Head"] = Polygon([(2, 13), (2, 8), (8, 8), (8, 13)])
 description = "Planer has to find a passage past a robot head and the print of the LTC."
 benchList.append(Benchmark("MyField", CollisionCheckerShapeRobot(myField, shape_robot), [[4,21,0]], [[18,1,0]], description, 2))
+
+
+myField = dict()
+myField["laby"] = labyrinth.generate()
+description = "The planer needs to find a path into the labyrinth"
+benchList.append(Benchmark("Labyrinth", CollisionCheckerShapeRobot(myField, shape_robot), [[16,2.5,0]], [[9,4.5,0]], description, 2))

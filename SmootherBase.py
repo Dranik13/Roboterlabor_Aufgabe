@@ -147,6 +147,8 @@ class SmootherBase():
         ani = matplotlib.animation.FuncAnimation(figure, animation, frames=len(self.path_per_epoche), interval=interval_ms)
         html = HTML(ani.to_jshtml())
         display(html)
+        plt.close()
+        
     
             
             

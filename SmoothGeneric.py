@@ -2,7 +2,7 @@ import random
 import numpy as np
 import networkx as nx
 import copy
-from SmootherBase import SmootherBase
+from SmootherBase import SmootherBase, Angle 
 import time
 
 class SmoothGeneric(SmootherBase):
@@ -11,35 +11,46 @@ class SmoothGeneric(SmootherBase):
         self.smoothed_path = path.copy()
         self.path_planner = copy.deepcopy(planner)
         self.id_counter = 0
+        self.limits = planner._collisionChecker.getEnvironmentLimits()
 
     def wrapToPi(self, a):
         return (a + np.pi) % (2*np.pi) - np.pi
 
     def interpAngle(self, theta0, theta1, t):
-        d = self.wrapToPi(theta1 - theta0)      # kürzeste Differenz
-        return self.wrapToPi(theta0 + t * d)  
+        # Erstelle Angle-Objekte mit korrekten Grenzen
+        angle_0 = Angle(theta0, self.limits[2][0], self.limits[2][1])
+        angle_1 = Angle(theta1, self.limits[2][0], self.limits[2][1])
+        
+        # Kürzeste Differenz (gibt Wert zwischen -π und π)
+        d = angle_1.value - angle_0.value        
+        # Interpoliere und normalisiere im gültigen Bereich
+        interpolated = angle_0.value + t * d
+        # print(f"Interpolation: angle_0={angle_0.value}, angle_1={angle_1.value}, t={t}, interpolated={interpolated}", flush=True)
 
-    def random_pt_on_edge(self, start_knot_pt, end_knot_pt):
+        result = Angle(interpolated, self.limits[2][0], self.limits[2][1])
+        return result.value
+
+    def random_pt_on_edge(self, start_node_pt, end_node_pt):
         # random number t [0, 1]
         t = random.random()
         
         # Linear interpolated point
-        x = (1 - t) * start_knot_pt[0] + t * end_knot_pt[0]
-        y = (1 - t) * start_knot_pt[1] + t * end_knot_pt[1]
-        if len(start_knot_pt) == 3:
-            orientation = self.interpAngle(start_knot_pt[2], end_knot_pt[2], t)
+        x = (1 - t) * start_node_pt[0] + t * end_node_pt[0]
+        y = (1 - t) * start_node_pt[1] + t * end_node_pt[1]
+        if len(start_node_pt) == 3:
+            orientation = self.interpAngle(start_node_pt[2], end_node_pt[2], t)
             return (x, y, orientation)
         else:
             return (x, y)
 
     def findRandomShortcut(self):
         points = []
-        knot_positions = nx.get_node_attributes(self.path_planner.graph,'pos')
+        node_positions = nx.get_node_attributes(self.path_planner.graph,'pos')
         for i in range(len(self.smoothed_path) - 1):
             u = self.smoothed_path[i]
             v = self.smoothed_path[i+1]
             
-            points.append(self.random_pt_on_edge(knot_positions[u], knot_positions[v]))
+            points.append(self.random_pt_on_edge(node_positions[u], node_positions[v]))
 
         shortcut_collides = True
         while shortcut_collides:

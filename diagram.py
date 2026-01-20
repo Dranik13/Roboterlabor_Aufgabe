@@ -10,11 +10,11 @@ def generate_diagramm(testList, resultList):
         planningTime = dict()
         roadmapSize = dict()
         smoothpathLength = dict()
-        smoothpathLength_generic = dict()
+        smoothpathLength_random = dict()
         roadmapSizeBG = dict()
-        roadmapSizeGeneric = dict()
+        roadmapSizeRandom = dict()
         smoothingTimeBG = dict()
-        smoothingTimeGeneric = dict()
+        smoothingTimeRandom = dict()
 
         #try:
         for result in resultList:
@@ -22,7 +22,7 @@ def generate_diagramm(testList, resultList):
                 #print result.benchmark.name  + " - " +  result.plannerFactoryName, len(result.solution)
                 G = result.graph
                 G_BG = result.smooth_graph_bg
-                G_Generic = result.smooth_graph_generic
+                G_Random = result.smooth_graph_random
                 path = result.solution
                 coords = [(G.nodes[n]['pos'][0], G.nodes[n]['pos'][1]) for n in path]
                 line = LineString(coords)
@@ -30,17 +30,17 @@ def generate_diagramm(testList, resultList):
                 smoothpath_bg = result.smoothed_path_bg
                 smoothcoords = [(G_BG.nodes[n]['pos'][0], G_BG.nodes[n]['pos'][1]) for n in smoothpath_bg]
                 smoothline = LineString(smoothcoords)
-                smoothpath_generic = result.smoothed_path_generic
-                smoothcoords_generic = [(G_Generic.nodes[n]['pos'][0], G_Generic.nodes[n]['pos'][1]) for n in smoothpath_generic]
-                smoothline_generic = LineString(smoothcoords_generic)
-                smoothpathLength_generic[result.plannerFactoryName] = smoothline_generic.length
+                smoothpath_random = result.smoothed_path_random
+                smoothcoords_random = [(G_Random.nodes[n]['pos'][0], G_Random.nodes[n]['pos'][1]) for n in smoothpath_random]
+                smoothline_random = LineString(smoothcoords_random)
+                smoothpathLength_random[result.plannerFactoryName] = smoothline_random.length
                 smoothpathLength[result.plannerFactoryName] = smoothline.length
                 planningTime[result.plannerFactoryName] = result.perfDataFrame.groupby(["name"]).sum(numeric_only=True)["time"]["planPath"]
                 roadmapSize[result.plannerFactoryName] = len(path)
                 roadmapSizeBG[result.plannerFactoryName] = len(smoothpath_bg)
-                roadmapSizeGeneric[result.plannerFactoryName] = len(smoothpath_generic)
+                roadmapSizeRandom[result.plannerFactoryName] = len(smoothpath_random)
                 smoothingTimeBG[result.plannerFactoryName] = result.bg_smoother.smoothing_time
-                smoothingTimeGeneric[result.plannerFactoryName] = result.smoothing.smoothing_time
+                smoothingTimeRandom[result.plannerFactoryName] = result.smoothing.smoothing_time
 
 
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(12, 8))
@@ -51,15 +51,15 @@ def generate_diagramm(testList, resultList):
         # -------- Daten --------
         planned_len   = np.array(list(pathLength.values()))
         bg_len        = np.array(list(smoothpathLength.values()))
-        generic_len   = np.array(list(smoothpathLength_generic.values()))
+        random_len   = np.array(list(smoothpathLength_random.values()))
 
         planned_rm    = np.array(list(roadmapSize.values()))
         bg_rm         = np.array(list(roadmapSizeBG.values()))
-        generic_rm    = np.array(list(roadmapSizeGeneric.values()))
+        random_rm    = np.array(list(roadmapSizeRandom.values()))
 
         planned_time    = np.array(list(planningTime.values()))
         bg_time         = np.array(list(smoothingTimeBG.values()))
-        generic_time    = np.array(list(smoothingTimeGeneric.values()))
+        random_time    = np.array(list(smoothingTimeRandom.values()))
 
         n = len(labels)
         group_size = 6
@@ -79,7 +79,7 @@ def generate_diagramm(testList, resultList):
         # -------- Plot 1: Path Lengths --------
         ax1.bar(x - width, planned_len,  width, label="Planned path", color="blue")
         ax1.bar(x,         bg_len,       width, label="BG smoothing", color="green")
-        ax1.bar(x + width, generic_len,  width, label="Generic smoothing", color="purple")
+        ax1.bar(x + width, random_len,  width, label="Random smoothing", color="purple")
 
         ax1.set_ylabel("Path length")
         ax1.legend()
@@ -88,7 +88,7 @@ def generate_diagramm(testList, resultList):
         # -------- Plot 2: Number of Path Points --------
         ax2.bar(x - width, planned_rm,  width, label="Planned roadmap", color="blue")
         ax2.bar(x,         bg_rm,       width, label="BG roadmap", color="green")
-        ax2.bar(x + width, generic_rm,  width, label="Generic roadmap", color="purple")
+        ax2.bar(x + width, random_rm,  width, label="Random roadmap", color="purple")
 
         ax2.set_ylabel("Roadmap size")
         ax2.legend()
@@ -97,7 +97,7 @@ def generate_diagramm(testList, resultList):
         # -------- Plot 3: Planning/Smoothing Time --------
         ax3.bar(x - width, planned_time,  width, label="Planned roadmap", color="blue")
         ax3.bar(x,         bg_time,       width, label="BG roadmap", color="green")
-        ax3.bar(x + width, generic_time,  width, label="Generic roadmap", color="purple")
+        ax3.bar(x + width, random_time,  width, label="Random roadmap", color="purple")
 
         ax3.set_ylabel("Time")
         ax3.legend()
@@ -120,7 +120,7 @@ def generate_timeplot(resultList):
     for result in resultList:
         if result.solution != []:
             G_BG = result.smooth_graph_bg
-            G_Generic = result.smooth_graph_generic
+            G_Random = result.smooth_graph_random
             fig, (ax_left, ax_right) = plt.subplots(1, 2, figsize=(12, 4))
             bg_geom_lengths = [
                 path_length_from_nodes(p, G_BG)
@@ -128,12 +128,12 @@ def generate_timeplot(resultList):
             ]
 
             sm_geom_lengths = [
-                path_length_from_nodes(p, G_Generic)
+                path_length_from_nodes(p, G_Random)
                 for p in result.smoothing.path_per_epoche
             ]
 
             ax_left.plot(bg_geom_lengths, marker='o', label="BG Smoother")
-            ax_left.plot(sm_geom_lengths, marker='x', label="Generic Smoother")
+            ax_left.plot(sm_geom_lengths, marker='x', label="Random Smoother")
 
             ax_left.set_xlabel("Iteration")
             ax_left.set_ylabel("Pfadlänge (metrisch)")
@@ -148,7 +148,7 @@ def generate_timeplot(resultList):
             sm_lengths = [len(p) for p in result.smoothing.path_per_epoche]
 
             ax_right.plot(bg_lengths, marker='o', label="BG Smoother")
-            ax_right.plot(sm_lengths, marker='x', label="Generic Smoother")
+            ax_right.plot(sm_lengths, marker='x', label="Random Smoother")
 
             ax_right.set_xlabel("Iteration")
             ax_right.set_ylabel("Number of knots")

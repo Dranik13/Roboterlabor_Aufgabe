@@ -5,7 +5,7 @@ import copy
 from SmootherBase import SmootherBase, Angle 
 import time
 
-class SmoothGeneric(SmootherBase):
+class SmoothRandom(SmootherBase):
     def __init__(self, planner, path):
         super().__init__()
         self.smoothed_path = path.copy()
@@ -13,8 +13,60 @@ class SmoothGeneric(SmootherBase):
         self.id_counter = 0
         self.limits = planner._collisionChecker.getEnvironmentLimits()
 
-    def wrapToPi(self, a):
-        return (a + np.pi) % (2*np.pi) - np.pi
+    def smooth_path(self, config):
+        self.config:dict = config
+        start_time = time.time()
+
+        for i in range(self.config["epoches"]):
+            # a könnte (und sollte) man durch eine maximale Anz. an Versuchen austauschen
+            a = True
+            while a:
+                if self.findRandomShortcut():
+                    break
+
+        self.smoothing_time = time.time() - start_time
+        return self.smoothed_path, self.path_planner.graph
+
+    def findRandomShortcut(self):
+        points = []
+        node_positions = nx.get_node_attributes(self.path_planner.graph,'pos')
+        
+        # Platziere auf jeder Kante jeweils einen zufälligen Punkt
+        for i in range(len(self.smoothed_path) - 1):
+            u = self.smoothed_path[i]
+            v = self.smoothed_path[i+1]
+            points.append(self.randomPtOnEdge(node_positions[u], node_positions[v]))
+
+        # Wähle zwei Punkte und prüfe ob sie sich kollisionsfrei verbinden lassen
+        shortcut_collides = True
+        while shortcut_collides:
+            u = random.randint(0, len(points)-1)
+            # Stelle sicher, dass der zweite Punkt (v) != erster Punkt (u)
+            v = random.choice([i for i in range(0,len(points)-1) if i != u])
+
+            if(u > v):
+                u, v = v, u
+            
+            shortcut_collides = self.path_planner._collisionChecker.lineInCollision(points[u], points[v], self.config["collision_intervals"])
+            
+            if not shortcut_collides:
+                self.insertAndConnectPointsOnEdges(points, u, v)
+                return True
+            else:
+                return False
+
+    def randomPtOnEdge(self, start_node_pt, end_node_pt):
+        # random number t [0, 1]
+        t = random.random()
+        
+        # Linear interpolated point
+        x = (1 - t) * start_node_pt[0] + t * end_node_pt[0]
+        y = (1 - t) * start_node_pt[1] + t * end_node_pt[1]
+        if len(start_node_pt) == 3:
+            orientation = self.interpAngle(start_node_pt[2], end_node_pt[2], t)
+            return (x, y, orientation)
+        else:
+            return (x, y)
 
     def interpAngle(self, theta0, theta1, t):
         # Erstelle Angle-Objekte mit korrekten Grenzen
@@ -29,45 +81,6 @@ class SmoothGeneric(SmootherBase):
 
         result = Angle(interpolated, self.limits[2][0], self.limits[2][1])
         return result.value
-
-    def random_pt_on_edge(self, start_node_pt, end_node_pt):
-        # random number t [0, 1]
-        t = random.random()
-        
-        # Linear interpolated point
-        x = (1 - t) * start_node_pt[0] + t * end_node_pt[0]
-        y = (1 - t) * start_node_pt[1] + t * end_node_pt[1]
-        if len(start_node_pt) == 3:
-            orientation = self.interpAngle(start_node_pt[2], end_node_pt[2], t)
-            return (x, y, orientation)
-        else:
-            return (x, y)
-
-    def findRandomShortcut(self):
-        points = []
-        node_positions = nx.get_node_attributes(self.path_planner.graph,'pos')
-        for i in range(len(self.smoothed_path) - 1):
-            u = self.smoothed_path[i]
-            v = self.smoothed_path[i+1]
-            
-            points.append(self.random_pt_on_edge(node_positions[u], node_positions[v]))
-
-        shortcut_collides = True
-        while shortcut_collides:
-            u = random.randint(0, len(points)-1)
-            # make sure second point (v) != first point (u)
-            v = random.choice([i for i in range(0,len(points)-1) if i != u])
-
-            if(u > v):
-                u, v = v, u
-            
-            shortcut_collides = self.path_planner._collisionChecker.lineInCollision(points[u], points[v], self.config["collision_intervals"])
-            
-            if not shortcut_collides:
-                self.insertAndConnectPointsOnEdges(points, u, v)
-                return True
-            else:
-                return False 
 
     def insertAndConnectPointsOnEdges(self, random_edge_pts, u, v):
         id_u = f"S{self.id_counter + 1}"
@@ -84,7 +97,6 @@ class SmoothGeneric(SmootherBase):
 
         self.path_planner.graph.add_node(id_u, pos=random_edge_pts[u], color="#e28a0e")
         self.path_planner.graph.add_node(id_v, pos=random_edge_pts[v], color="#e28a0e")
-        # print("pos S1: ", random_edge_pts[u], " pos S2: ", random_edge_pts[v], flush=True)
         
         self.path_planner.graph.add_edge(self.smoothed_path[u], id_u)
         self.path_planner.graph.add_edge(id_u, id_v)
@@ -99,14 +111,3 @@ class SmoothGeneric(SmootherBase):
         self.id_counter += 2
 
         return True
-    def smooth_path(self, config):
-        self.config:dict = config
-        start_time = time.time()
-        for i in range(self.config["epoches"]):
-            a = True
-            while a:
-                if self.findRandomShortcut():
-                    self.path_per_epoche.append(list(self.smoothed_path))
-                    break
-        self.smoothing_time = time.time() - start_time
-        return self.smoothed_path, self.path_planner.graph

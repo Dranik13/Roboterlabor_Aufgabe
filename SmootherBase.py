@@ -1,3 +1,12 @@
+'''
+The Python script was created as part of the examination for the lecture "Robot Programming" at the University of Applied Sciences Karlsruhe. It serves as a basis for all path smoothing algorithms for the paths determined by the various PRM planners.
+
+Authors: Benjamin Dilly, Dennis MCNab, and Anton Kisel
+Date: 01/21/2026
+
+Responsible Professor: Prof. Dr.-Ing. Björn Hein
+'''
+
 import numpy as np 
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -25,8 +34,27 @@ def interpolate_line(startPos, endPos, step_l):
 
 import math
 
+
 class Angle:
+    '''
+    This class is used for the correct mathematical handling of angle calculations.  
+    It ensures that the angle difference always returns the shortest rotation angle and that the robot's limitations are taken into account.  
+    This guarantees that the robot always turns in the correct direction in later applications.  
+
+    Example: A shaping robot is in the following position at 330°. It should now be checked whether smoothing to a node with an orientation of 15° is possible. With a simple angle difference (15 - 330), the robot would rotate clockwise by 315° to move to the new node. However, this is not collision-free given the current environment.  
+    If it were to rotate counterclockwise by 50°, i.e., the shorter angle distance, collision-free smoothing would be possible.
+    '''
     def __init__(self, value: float, lower: float = -math.pi, upper: float = math.pi):
+        '''
+        Docstring for __init__
+        
+        :param value: initial angle value
+        :type value: float
+        :param lower: lower angle boundary of movement
+        :type lower: float
+        :param upper: upper angle boundary of movement
+        :type upper: float
+        '''
         self.lower = lower
         self.upper = upper
         # zyklisch, wenn der Bereich genau 2π groß ist
@@ -34,7 +62,9 @@ class Angle:
         self.value = self._normalize(value)
 
     def _normalize(self, val: float) -> float:
-        """Normalisiert den Winkel in den Bereich [lower, upper] oder modulo 2π bei zyklischen Grenzen."""
+        """
+        Normalizes the angle to the range [lower, upper] or modulo 2π for cyclic boundaries.
+        """
         if self.is_cyclic:
             # modulo 2π normalisieren
             return ((val - self.lower) % (2*math.pi)) + self.lower
@@ -90,7 +120,19 @@ class Angle:
         return Angle(new_val, self.lower, self.upper)
     
 
+
+
 class SmootherBase():
+    '''
+    The base class for all smoothing methods. It implements the basic parameters and the animation functions for visualizing the path smoothing and for comparing the robot's movement on the base path and on the smoothed path.
+
+    :param smoothed_path: The smoothed base path
+    :param path_planner: The planner used to generate the unpolished path
+    :param config: The configuration dictionary for each path smoother
+    :param path_per_epoche: The smoothed path at each smoothing iteration. Used for the smoothing animation
+    :param smoothing_time: The time the smoother required
+    '''
+    
     def __init__(self):
         self.smoothed_path = []
         self.path_planner = None
@@ -101,48 +143,58 @@ class SmootherBase():
         self.smoothing_time = 0
     
     def visualize_smoothing(self, seconds_per_frame=0.1, title="Path smoothing BG"):
+        '''
+        This functions animates the smoothed path while each iteration of the smoothing process
+        '''
         if self.smoothed_path == []:
             print("no Smoothed Path",flush=True)
             return 
+        
         figure = plt.figure(figsize=(7, 7))
-
         ax = figure.add_subplot(1, 1, 1)
 
+
+        # Get all neccessarily informations
         environment = self.path_planner._collisionChecker
         workSpaceLimits = environment.robot.getLimits()
-                   
+           
+        # Reset the robot to zero position for zero frame
         environment.robot.setTo(self.path_planner.graph.nodes[self.smoothed_path[0]]["pos"])
-                    
+
+        # Draws the frame          
         def animation(frame):
-            ## clear taks space figure
+            # Setting up of current frame axes
             ax.cla()
-            ## fix figure size
             ax.set_title(title, fontsize=14)
             ax.set_xlim(workSpaceLimits[0])
             ax.set_ylim(workSpaceLimits[1])
-            ## draw obstacles
-            environment.drawObstacles(ax)
-            ## update robot position
 
+            ## Draw environement
+            environment.drawObstacles(ax)
+            
+            # Creating of the smoothed graphs nodes at the current epoche/frame
             graph = nx.Graph()
             for node in self.path_per_epoche[frame]:
                 graph.add_node(node, pos = self.path_planner.graph.nodes[node]["pos"])
             
-            
+            # Creating of edges
             for i in range(len(self.path_per_epoche[frame]) - 1):
                 graph.add_edge(self.path_per_epoche[frame][i], self.path_per_epoche[frame][i + 1])
 
+            # Remapping the multidimensional nodes to an two dimensional space for drawing
             pos = nx.get_node_attributes(graph,'pos')
-            # todo extract from pos the first two dimensions only for drawing in workspace
             pos2D = dict()
             for key in pos.keys():
                 pos2D[key] = (pos[key][0], pos[key][1])
-                
+            
+            # Updating of Graph's node positions
             pos = pos2D
 
+            # Final drawing
             nx.draw_networkx_nodes(graph, pos,  cmap=plt.cm.Blues, ax = ax, node_size=100)
             nx.draw_networkx_edges(graph,pos, ax = ax)
         
+        # Setting up the animation
         interval_ms = int(round(seconds_per_frame * 1000.0))
         ani = matplotlib.animation.FuncAnimation(figure, animation, frames=len(self.path_per_epoche), interval=interval_ms)
         html = HTML(ani.to_jshtml())
@@ -154,65 +206,89 @@ class SmootherBase():
             
     def animate_path(self, origin_path, title="Smoothed animation",
                     seconds_total=5.0, fps=15):
-        if not origin_path:
-            return
+        '''
+        This funtion creates the animation which compares the movement of the robot while using the unpolished path and the 
+        smoothed path.
         
-        origin_planer = copy.deepcopy(self.path_planner)
-        smoothed_planer = copy.deepcopy(self.path_planner)
+        :param origin_path: The unpolished path
+        :param seconds_total: Total playtime of the animation
+        :param fps: Frames per second of the animation
+        '''
+
+        '''''''''''''''''
+
+        Functions starting here
         
-        to_remove = []
-        for node in origin_planer.graph.nodes():
-            if node not in origin_path:
-                to_remove.append(node)
-        
-        origin_planer.graph.remove_nodes_from(to_remove)
+        '''''''''''''''''
+
+
+        def cleaning_of_graphs():
+            '''
+            Removing of all nodes which aren't part of the final paths
+            '''
+            to_remove = []
+            for node in origin_planer.graph.nodes():
+                if node not in origin_path:
+                    to_remove.append(node)
             
-        to_remove = []  
-        for node in smoothed_planer.graph.nodes():
-            if node not in self.smoothed_path:
-                to_remove.append(node)
-        
-        smoothed_planer.graph.remove_nodes_from(to_remove)
-        
-        # adding edges (filling broken connections)
-        for i in range(1, len(self.smoothed_path)):
-            smoothed_planer.graph.add_edge(self.smoothed_path[i - 1], self.smoothed_path[i])
+            origin_planer.graph.remove_nodes_from(to_remove)
+                
+            to_remove = []  
+            for node in smoothed_planer.graph.nodes():
+                if node not in self.smoothed_path:
+                    to_remove.append(node)
+            
+            smoothed_planer.graph.remove_nodes_from(to_remove)
+            
+            # adding edges (filling broken connections)
+            for i in range(1, len(self.smoothed_path)):
+                smoothed_planer.graph.add_edge(self.smoothed_path[i - 1], self.smoothed_path[i])
         
         # Interpoliert entlang des Pfades nach Bogenlänge auf genau target_frames Punkte
         def resample_by_arclength(positions, target_frames):
-            # positions: Liste von Posen (iterable von numerischen Arrays/lists)
+            '''
+            This function calculates the amount of interpolation steps per path edge.
+            The total amount of interpolations (target_frames) is asigned to each edge through it's 
+            proportion of the total path length. \n
+            The return is the interpolated list of all interpolated positions of the robot to pass by.
+            
+            :param positions: The list of the position of all nodes which are included in the current path
+            :param target_frames: The total amount of frames to render
+            '''
             if target_frames <= 0:
                 return []
             if len(positions) == 0:
                 return []
+            
             pos_arr = np.asarray(positions, dtype=float)
-            # Falls nur eine Pose vorhanden -> wiederhole sie
+            
+            # If only one pose is available -> repeat for it for all frames 
             if pos_arr.shape[0] == 1:
                 return [positions[0] for _ in range(target_frames)]
 
-            # Berechne Segmentlängen (euclidische Distanz in Pose-Raum)
+            # Calculate the segment (edge) lengths and the total path length
             diffs = pos_arr[1:] - pos_arr[:-1]
             seg_lengths = np.linalg.norm(diffs, axis=1)
             total_length = seg_lengths.sum()
-            # Falls Gesamtlaenge 0 (alle Posen identisch) -> wiederhole Startpose
+
+            # If total length is zero -> all positions equal -> repeat start pose for all frames
             if total_length == 0:
                 return [positions[0] for _ in range(target_frames)]
 
-            # Kumulative Normierte Längen (0..1)
+            '''
+            Interpolation
+            '''
             cum = np.concatenate(([0.0], np.cumsum(seg_lengths)))
             cum_norm = cum / cum[-1]  # Länge len = number_of_nodes
 
-            # Neue Parameterwerte gleichmäßig über 0..1
             new_t = np.linspace(0.0, 1.0, target_frames)
 
-            # Für jeden neuen t: finde Segment und interpoliere linear
+            # find the corrsponding segment for each t and interpolate the segment
             resampled = []
             for t in new_t:
-                # falls t == 1.0, setze auf letztes Element
                 if t >= 1.0:
                     resampled.append(pos_arr[-1].tolist())
                     continue
-                # finde index i so dass cum_norm[i] <= t < cum_norm[i+1]
                 i = np.searchsorted(cum_norm, t, side='right') - 1
                 if i < 0:
                     i = 0
@@ -221,42 +297,28 @@ class SmootherBase():
                     continue
                 t0 = cum_norm[i]
                 t1 = cum_norm[i + 1]
-                # lokale Interpolationsparameter (0..1)
+
                 local_alpha = 0.0 if t1 == t0 else (t - t0) / (t1 - t0)
                 p = (1.0 - local_alpha) * pos_arr[i] + local_alpha * pos_arr[i + 1]
                 resampled.append(p.tolist())
 
-            # numerische Sicherheit: setze explizit erste und letzte Pose
+            # Set the start and end position
             resampled[0] = positions[0]
             resampled[-1] = positions[-1]
             return resampled
 
-        # Hilfsfunktion: extrahiere Knotenposen aus einem Pfad
         def path_positions_from_nodes(path, planer):
+            '''Extracts the nodes positions from a given path'''
             return [planer.graph.nodes[node]['pos'] for node in path]
 
-        # Gesamtanzahl Frames (gleich für beide Animationen)
-        total_frames = max(1, int(round(seconds_total * fps)))
+       
 
-        # Erzeuge Positionen (ursprünglich mit Knoten) und resample auf total_frames
-        origin_raw = path_positions_from_nodes(origin_path, origin_planer)
-        smoothed_raw = path_positions_from_nodes(self.smoothed_path, smoothed_planer)
-
-        origin_pos = resample_by_arclength(origin_raw, total_frames)
-        smoothed_pos = resample_by_arclength(smoothed_raw, total_frames)
-
-        # Workspace limits (falls unterschiedlich, behalten wir jeweils)
-        origin_limits = origin_planer._collisionChecker.robot.getLimits()
-        smoothed_limits = smoothed_planer._collisionChecker.robot.getLimits()
-
-        # Robot-Referenz (falls zwei unabhängige Roboter nötig sind, muss environment angepasst werden)
-        origin_robot = origin_planer._collisionChecker.robot
-        smoothed_robot = smoothed_planer._collisionChecker.robot
-
-        # Gemeinsame Animationsfunktion: aktualisiert beide Subplots synchron
         def animation(frame, ax_left, ax_right, origin_positions, smoothed_positions,
                     origin_limits, smoothed_limits, origin_path, smoothed_path):
-            # linke Figur: original
+            '''
+            This function draws the final subplots for the comparision frame
+            '''
+            # left Figur: original
             ax_left.cla()
             ax_left.set_title("Original path", fontsize=14)
             ax_left.set_xlim(origin_limits[0])
@@ -268,7 +330,7 @@ class SmootherBase():
             origin_robot.setTo(pos_o)
             self.simple_draw(origin_planer, ax=ax_left)
 
-            # rechte Figur: smoothed
+            # right Figur: smoothed
             ax_right.cla()
             ax_right.set_title(title, fontsize=14)
             ax_right.set_xlim(smoothed_limits[0])
@@ -280,25 +342,68 @@ class SmootherBase():
             smoothed_robot.setTo(pos_s)
             self.simple_draw(smoothed_planer, ax=ax_right)
 
-        interval_ms = int(round(1000.0 / fps))
 
-        # Eine Figur mit zwei Subplots nebeneinander
-        fig_local = plt.figure(figsize=(14, 7))
-        ax_origin = fig_local.add_subplot(1, 2, 1)
-        ax_smoothed = fig_local.add_subplot(1, 2, 2)
 
+        # Animation wrapper function
         def animate_both(frame):
             animation(frame, ax_origin, ax_smoothed,
                     origin_pos, smoothed_pos,
                     origin_limits, smoothed_limits,
                     origin_path, self.smoothed_path)
+            
+        
+        '''''''''
 
+        Code Starts here
+
+        '''''''''
+
+        if not origin_path:
+            return
+        
+        origin_planer = copy.deepcopy(self.path_planner)
+        smoothed_planer = copy.deepcopy(self.path_planner)
+        
+        cleaning_of_graphs()
+        
+        # Calculate total amount of frames
+        total_frames = max(1, int(round(seconds_total * fps)))
+
+        # Extract node positions
+        origin_raw = path_positions_from_nodes(origin_path, origin_planer)
+        smoothed_raw = path_positions_from_nodes(self.smoothed_path, smoothed_planer)
+
+        # Create list of interpolated robot poses
+        origin_pos = resample_by_arclength(origin_raw, total_frames)
+        smoothed_pos = resample_by_arclength(smoothed_raw, total_frames)
+
+        # Extract environement metadata
+        origin_limits = origin_planer._collisionChecker.robot.getLimits()
+        smoothed_limits = smoothed_planer._collisionChecker.robot.getLimits()
+
+        # Extract the robot references
+        origin_robot = origin_planer._collisionChecker.robot
+        smoothed_robot = smoothed_planer._collisionChecker.robot
+
+        interval_ms = int(round(1000.0 / fps))
+
+        # Figure
+        fig_local = plt.figure(figsize=(14, 7))
+        ax_origin = fig_local.add_subplot(1, 2, 1)
+        ax_smoothed = fig_local.add_subplot(1, 2, 2)
+
+        # Run the animation
         ani = matplotlib.animation.FuncAnimation(fig_local, animate_both, frames=total_frames, interval=interval_ms)
         html = HTML(ani.to_jshtml())
         display(html)
         plt.close()
 
+        
+
     def simple_draw(self, planer, ax):
+        '''
+        Draws the current environement included the robot and graph
+        '''
         planer._collisionChecker.drawObstacles(ax)
         
         graph = planer.graph

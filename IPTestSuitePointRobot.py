@@ -7,13 +7,9 @@ License is based on Creative Commons: Attribution-NonCommercial 4.0 Internationa
 """
 
 from IPBenchmark import Benchmark 
-from IPEnvironment import CollisionChecker
 from IPEnvironmentShapeRobot import CollisionCheckerShapeRobot
-from IPEnvironmentShapeRobot import ShapeRobot, ShapeRobotWithOrientation
-from shapely.geometry import Point, Polygon, LineString
-import shapely.affinity
-import math
-import numpy as np
+from IPEnvironmentShapeRobot import ShapeRobotWithOrientation
+from shapely.geometry import Point, LineString
 
 import labyrinth
 
@@ -21,23 +17,6 @@ import labyrinth
 robot_shape = Point([(0,0)]).buffer(0.1)
 shape_robot = ShapeRobotWithOrientation(robot_shape, limits=[[0.0, 22.0], [0.0, 22.0], [0,0]])
 benchList = list()
-
-# -----------------------------------------
-
-# myField = dict()
-# myField["L"] = Polygon([(10, 16), (10, 11), (13, 11), (13,12), (11,12), (11,16)])
-# myField["T"] = Polygon([(14,16), (14, 15), (15, 15),(15,11), (16,11), (16,15), (17, 15), (17, 16)])
-# myField["C"] = Polygon([(19, 16), (19, 11), (22, 11), (22, 12), (20, 12), (20, 15), (22, 15), (22, 16)])
-
-# myField["Antenna_L"] = Polygon([(3, 12), (1, 16), (2, 16), (4, 12)])
-# myField["Antenna_Head_L"] = Point(1.5, 16).buffer(1)
-
-# myField["Antenna_R"] = Polygon([(7, 12), (9, 16), (8, 16), (6, 12)])
-# myField["Antenna_Head_R"] = Point(8.5, 16).buffer(1)
-
-# myField["Rob_Head"] = Polygon([(2, 13), (2, 8), (8, 8), (8, 13)])
-# description = "Planer has to find a passage past a robot head and the print of the LTC."
-# benchList.append(Benchmark("MyField", CollisionCheckerShapeRobot(myField, shape_robot), [[4, 21, 0]], [[18, 1, 0]], description, 2))
 
 # -----------------------------------------
 

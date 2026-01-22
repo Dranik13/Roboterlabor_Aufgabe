@@ -7,26 +7,15 @@ License is based on Creative Commons: Attribution-NonCommercial 4.0 Internationa
 """
 
 from IPBenchmark import Benchmark 
-from IPEnvironment import CollisionChecker
 from IPEnvironmentShapeRobot import CollisionCheckerShapeRobot
-from IPEnvironmentShapeRobot import ShapeRobot, ShapeRobotWithOrientation
-from shapely.geometry import Point, Polygon, LineString
-import shapely.affinity
-import math
+from IPEnvironmentShapeRobot import ShapeRobotWithOrientation
+from shapely.geometry import Polygon, LineString
+
 import numpy as np
 
 import labyrinth
 
 #define robot geometry
-# robot_shape = Polygon([
-#     (-0.5, -0.5),  # unten links
-#     (3, -0.5),     # unten rechts
-#     (3, 0.0),      # Innenknick rechts
-#     (0.5, 0.0),    # Innenknick unten horizontal
-#     (0.5, 1.0),    # oben links vom L-Schenkel
-#     (-0.5, 1.0)    # oben links außen
-#     ])
-
 robot_shape = Polygon(list(np.array([
     (0,0),
     (-3,0),

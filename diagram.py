@@ -1,8 +1,13 @@
+'''
+Description: Creation of diagrams comparing the two smoothing methods.
+'''
+
 import numpy as np
 import matplotlib.pylab as plt
-from shapely.geometry import Point, Polygon, LineString
+from shapely.geometry import LineString
 from matplotlib.ticker import MaxNLocator
 
+# Erstellung des Diagramms mit den Kriterien Pfadlänge, Anzahl der Knoten und Zeit des Planens bzw. Glättung
 def generate_diagramm(testList, resultList):
     for bench in testList:
         title = bench.name
@@ -19,7 +24,6 @@ def generate_diagramm(testList, resultList):
         #try:
         for result in resultList:
             if result.benchmark.name == bench.name:
-                #print result.benchmark.name  + " - " +  result.plannerFactoryName, len(result.solution)
                 G = result.graph
                 G_BG = result.smooth_graph_bg
                 G_Random = result.smooth_graph_random
@@ -115,6 +119,7 @@ def path_length_from_nodes(path, graph):
     coords = [(graph.nodes[n]['pos'][0], graph.nodes[n]['pos'][1]) for n in path]
     return LineString(coords).length
 
+# Erstellung des Diagramms mit dem Verlauf der Pfadlänge und Anzahl der Knoten
 def generate_timeplot(resultList):
     
     for result in resultList:
@@ -136,8 +141,8 @@ def generate_timeplot(resultList):
             ax_left.plot(sm_geom_lengths, marker='x', label="Random Smoother")
 
             ax_left.set_xlabel("Iteration")
-            ax_left.set_ylabel("Pfadlänge (metrisch)")
-            ax_left.set_title("Geometrische Pfadlänge")
+            ax_left.set_ylabel("Pathlength")
+            ax_left.set_title("Geometric Pathlength")
             ax_left.grid(True)
             ax_left.legend()
 
@@ -151,8 +156,8 @@ def generate_timeplot(resultList):
             ax_right.plot(sm_lengths, marker='x', label="Random Smoother")
 
             ax_right.set_xlabel("Iteration")
-            ax_right.set_ylabel("Number of knots")
-            ax_right.set_title("Pathlength (number of knots)")
+            ax_right.set_ylabel("Number of nodes")
+            ax_right.set_title("Number of nodes")
             ax_right.yaxis.set_major_locator(MaxNLocator(integer=True))
             ax_right.grid(True)
             ax_right.legend()

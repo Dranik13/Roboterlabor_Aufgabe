@@ -191,7 +191,7 @@ class SmootherBase():
             pos = pos2D
 
             # Final drawing
-            nx.draw_networkx_nodes(graph, pos,  cmap=plt.cm.Blues, ax = ax, node_size=100)
+            nx.draw_networkx_nodes(graph, pos, ax = ax, node_size=100)
             nx.draw_networkx_edges(graph,pos, ax = ax)
         
         # Setting up the animation
@@ -204,7 +204,7 @@ class SmootherBase():
     
             
             
-    def animate_path(self, origin_path, title="Smoothed animation",
+    def animate_path(self, origin_path, title="Smoothed animation", maintitle = "?",
                     seconds_total=5.0, fps=15):
         '''
         This funtion creates the animation which compares the movement of the robot while using the unpolished path and the 
@@ -389,6 +389,7 @@ class SmootherBase():
 
         # Figure
         fig_local = plt.figure(figsize=(14, 7))
+        fig_local.suptitle(f"{maintitle}")
         ax_origin = fig_local.add_subplot(1, 2, 1)
         ax_smoothed = fig_local.add_subplot(1, 2, 2)
 
@@ -415,5 +416,5 @@ class SmootherBase():
             
         pos = pos2D
 
-        nx.draw_networkx_nodes(graph, pos,  cmap=plt.cm.Blues, ax = ax, node_size=100)
+        nx.draw_networkx_nodes(graph, pos, ax = ax, node_size=100)
         nx.draw_networkx_edges(graph,pos, ax = ax)

@@ -1,8 +1,15 @@
+'''
+Description: planning and smoothing for all benchmark tasks and planner
+'''
 from IPPerfMonitor import IPPerfMonitor
 import ResultCollection
-resultList = list()
 
 def planning(plannerFactory, testList):
+    '''
+    This function performs planning and smoothing for all benchmark tasks and planner.\n
+    :param plannerFactory: List of all planers and their configurations\n
+    :param testList: List of all Benchmark tasks\n
+    '''
     resultList = list()
     for key,producer in list(plannerFactory.items()):
         print(key, producer)

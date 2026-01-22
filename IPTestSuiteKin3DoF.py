@@ -28,7 +28,7 @@ obst["obs4"] = LineString([(1, -3), (1, -4)]).buffer(0.3)
 description = "Following the direct connection from goal to start would lead the algorithm into a trap."
 benchList.append(Benchmark("Kin_Obst", KinChainCollisionChecker(r, obst, limits=limits, fk_resolution=.2), [start_joint_pos], [end_joint_pos], description, 2))
 
-# ---------- NEUER TEST -------------------
+# ---------- NEW TEST -------------------
 
 start_joint_pos2 = [2.3, 0, 0]
 end_joint_pos2 = [0.7, 0.3, 0.1]

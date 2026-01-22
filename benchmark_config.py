@@ -1,3 +1,6 @@
+'''
+Description: Configurations for all planners
+'''
 import IPBasicPRM
 import IPVISBasicPRM
 

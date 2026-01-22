@@ -94,4 +94,4 @@ def generate(walk_way = 3, x_start = 3, y_start = 1, length = 17, height = 18, t
     return Polygon(point_list)
 
 
-print(generate())
+#print(generate())

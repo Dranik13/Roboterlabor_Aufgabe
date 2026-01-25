@@ -14,7 +14,7 @@ Wenn jedoch ein reines PTP, also die lineare Einschränkung fehlt, genutzt wird,
 Im Falle des ungeglätteten Pfades wird die Abfahrgeschwindigkeit aufgrund von unnötigen Rotationen oder Umwegen ausgebremst, was nach der Glättung nicht mehr der Fall ist. Allerdings gibt es Einschränkungen durch den verwendeten Bewegungsbefehl.
 
 Im Falle des PTP:
-– Reines PTP und SPTP fahren immer von Punkt zu Punkt. Das bedeutet, dass es bei jedem Punkt einen vollen Stopp vollzieht, bevor der nachfolgende angefahren wird. Dies ist nicht nur energetisch und verschleißtechnisch, sondern auch in Bezug auf die Geschwindigkeit der Aufgabenerfüllung unvorteilhaft.
+- Reines PTP und SPTP fahren immer von Punkt zu Punkt. Das bedeutet, dass es bei jedem Punkt einen vollen Stopp vollzieht, bevor der nachfolgende angefahren wird. Dies ist nicht nur energetisch und verschleißtechnisch, sondern auch in Bezug auf die Geschwindigkeit der Aufgabenerfüllung unvorteilhaft.
 - Je dichter hierbei die Wegpunkte liegen, desto langsamer wird die Bewegung bis zum völligen Stillstand, da die Distanz zu klein für eine großartige Bewegung (Beschleunigungen und Abbremsungen) werden.
 
 # Frage 3: Wie könnte man weiterhin die Abfahrgeschwindigkeit erhöhen?

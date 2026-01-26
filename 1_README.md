@@ -126,10 +126,10 @@ Fallback strategy for blocked direct jumps:
 
 ### Special Features
 
-- ✅ **Deterministic**: Same input → Same output
-- ✅ **Guaranteed Collision-Free**: All intermediate steps checked
-- ✅ **Angle-Aware**: Correct angle calculation for robots with orientation
-- ⚠️ **Computationally Intensive**: O(n²) per iteration (all corner combinations)
+- **Deterministic**: Same input → Same output
+- **Guaranteed Collision-Free**: All intermediate steps checked
+- **Angle-Aware**: Correct angle calculation for robots with orientation
+- **Computationally Intensive**: O(n²) per iteration (all corner combinations)
 
 ---
 
